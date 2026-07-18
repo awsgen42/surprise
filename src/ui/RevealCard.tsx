@@ -22,6 +22,13 @@ export default function RevealCard({
   };
 
   const isLetter = activeCard.kind === "letter";
+  const isLove = activeCard.kind === "love";
+  const glyph = isLetter ? "✉" : isLove ? "♡" : "✦";
+  const closeLabel = isLetter
+    ? "close, with all my heart"
+    : isLove
+      ? "♡"
+      : "keep it";
 
   return (
     <div style={styles.backdrop} className="no-select" onClick={close}>
@@ -32,7 +39,7 @@ export default function RevealCard({
         aria-modal="true"
         aria-label={isLetter ? "A letter" : "A memory"}
       >
-        <div style={styles.glyph}>{isLetter ? "✉" : "✦"}</div>
+        <div style={styles.glyph}>{glyph}</div>
         {activeCard.title && <div style={styles.title}>{activeCard.title}</div>}
         {activeCard.image && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -40,7 +47,7 @@ export default function RevealCard({
         )}
         <p style={styles.body}>{activeCard.body}</p>
         <button style={styles.close} onClick={close}>
-          {isLetter ? "close, with all my heart" : "keep it"}
+          {closeLabel}
         </button>
       </div>
     </div>

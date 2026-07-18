@@ -50,6 +50,7 @@ export function resetSave() {
     "collectibles",
     "achievements",
     "mubi",
+    "love",
   ]) {
     safeStorage.removeItem(saveKey(domain));
   }

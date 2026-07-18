@@ -3,7 +3,7 @@ import { create } from "zustand";
 // Ephemeral UI state (not persisted) — the currently displayed reveal card
 // (a memory or the birthday letter). Kept tiny and separate from domain state.
 
-export type CardKind = "memory" | "letter";
+export type CardKind = "memory" | "letter" | "love";
 
 export interface RevealCard {
   kind: CardKind;

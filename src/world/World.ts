@@ -8,6 +8,7 @@ import { Ocean } from "./Ocean";
 import { Sky } from "./Sky";
 import { IntroParticles, AirMotes, Fireflies } from "./Particles";
 import { Lanterns, Jellyfish, Leaps } from "./Life";
+import { Hearts } from "./Hearts";
 
 function clamp01(v: number) {
   return Math.max(0, Math.min(1, v));
@@ -28,6 +29,8 @@ export type WorldOptions = {
   onRipple?: (first: boolean) => void;
   /** Fired when a memory-carrying lantern is tapped. */
   onLanternTap?: (id: string) => void;
+  /** Fired when a floating heart is collected. */
+  onHeartTap?: (id: string) => void;
 };
 
 /**
@@ -59,6 +62,7 @@ export class WorldEngine {
   private lanterns: Lanterns;
   private jellyfish: Jellyfish;
   private leaps: Leaps;
+  private hearts: Hearts;
 
   private started = false;
   private paused = false;
@@ -112,6 +116,7 @@ export class WorldEngine {
     this.jellyfish = new Jellyfish(this.mobile ? 18 : 32);
     this.leaps = new Leaps(this.mobile ? 3 : 4);
     this.leaps.onSplash = (x, z) => this.rippleAtWorld(x, z, 1.2);
+    this.hearts = new Hearts(this.mobile ? 5 : 7);
 
     this.scene.add(
       this.ocean.mesh,
@@ -121,7 +126,8 @@ export class WorldEngine {
       this.fireflies.points,
       this.lanterns.group,
       this.jellyfish.points,
-      this.leaps.group
+      this.leaps.group,
+      this.hearts.group
     );
 
     this.ocean.setMoon(this.sky.moon.dir, this.sky.moon.color);
@@ -174,6 +180,20 @@ export class WorldEngine {
       if (id && this.lanterns.isCarrier(id) && !this.lanterns.isOpened(id)) {
         this.lanterns.markOpened(id);
         this.opts.onLanternTap?.(id);
+        return;
+      }
+    }
+
+    // then collectible hearts
+    const heartHits = this.raycaster.intersectObjects(
+      this.hearts.getTapTargets(),
+      true
+    );
+    if (heartHits.length) {
+      const id = this.hearts.resolveHeartId(heartHits[0].object);
+      if (id && !this.hearts.isCollected(id)) {
+        this.hearts.markCollected(id);
+        this.opts.onHeartTap?.(id);
         return;
       }
     }
@@ -283,6 +303,7 @@ export class WorldEngine {
     this.lanterns.update(t, seaReveal, this.camera);
     this.jellyfish.update(t, seaReveal);
     this.leaps.update(this.dt, seaReveal);
+    this.hearts.update(t, seaReveal, this.camera);
 
     // bloom eases up gently as the world brightens
     this.bloom.strength = lerp(
@@ -383,7 +404,8 @@ export class WorldEngine {
       this.fireflies.points,
       this.lanterns.group,
       this.jellyfish.points,
-      this.leaps.group
+      this.leaps.group,
+      this.hearts.group
     );
     this.ocean.dispose();
     this.sky.dispose();
@@ -393,6 +415,7 @@ export class WorldEngine {
     this.lanterns.dispose();
     this.jellyfish.dispose();
     this.leaps.dispose();
+    this.hearts.dispose();
     this.composer.dispose();
     // NOTE: the renderer/canvas are owned by R3F and disposed by <Canvas>.
     this.scene.background = null;

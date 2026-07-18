@@ -24,6 +24,12 @@ export const ACHIEVEMENTS: Record<string, AchievementDef> = {
     title: "Every piece of him",
     description: "You opened every memory lantern.",
   },
+  "heart-collector": {
+    id: "heart-collector",
+    title: "Heart Collector",
+    description: "You gathered the hearts drifting on the sea.",
+    secret: true,
+  },
   "the-truth": {
     id: "the-truth",
     title: "Made for you",

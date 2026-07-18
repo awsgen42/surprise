@@ -20,6 +20,7 @@ import { useUIStore, type RevealCard as Card } from "@/stores/ui";
 import { speak } from "@/ai/mubi";
 import { award } from "@/achievements/engine";
 import { WARMTH } from "@/love/love";
+import { drawLoveMessage } from "@/love/library";
 import { MEMORIES, memoryById } from "@/content/memories";
 import { personalization, fill } from "@/content/personalization";
 
@@ -66,6 +67,7 @@ export default function Experience() {
       onArrive: () => setShowUI(true),
       onRipple: (first) => onRipple(first),
       onLanternTap: (id) => onLanternTap(id),
+      onHeartTap: (id) => onHeartTap(id),
     };
   }
 
@@ -89,6 +91,7 @@ export default function Experience() {
         speak,
         award,
         simLantern: (id: string) => onLanternTap(id),
+        simHeart: (id: string) => onHeartTap(id),
         state: () => ({
           progress: useProgressStore.getState(),
           collectibles: useCollectiblesStore.getState(),
@@ -203,6 +206,17 @@ export default function Experience() {
       kind: "memory",
       body: fill(memoryById(mem.id)?.caption ?? mem.caption),
     });
+  };
+
+  const onHeartTap = (id: string) => {
+    touch();
+    const c = useCollectiblesStore.getState();
+    c.addHeart(id);
+    useProgressStore.getState().addWarmth(WARMTH.ripple * 2);
+    const msg = drawLoveMessage("micro-love");
+    if (msg) useUIStore.getState().showCard({ kind: "love", body: msg.text });
+    // Heart Collector once a few are gathered
+    if (c.hearts.length >= 4) award("heart-collector");
   };
 
   const onCardClose = (card: Card) => {

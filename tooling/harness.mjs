@@ -81,6 +81,14 @@ try {
   check("Lantern opens a memory card", card.length > 0, card.slice(0, 40) + "…");
   if (SHOTS) await page.screenshot({ path: shotDir + "02-memory.png" });
 
+  // collectible heart delivers a love message (replaces any open card)
+  await page.evaluate(() => window.__sos.simHeart("heart-1"));
+  await page.waitForTimeout(900);
+  const love = await page.evaluate(
+    () => document.querySelector('[role="dialog"] p')?.textContent || ""
+  );
+  check("Heart delivers a love message", love.length > 0, love.slice(0, 30) + "…");
+
   // birthday reveal chain
   await page.evaluate(() => {
     window.__sos.simLantern("lantern-2");
