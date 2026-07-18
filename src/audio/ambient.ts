@@ -167,6 +167,23 @@ export class Ambient {
     this.chimeTimer = window.setTimeout(tick, 3500);
   }
 
+  /** A soft one-shot chime for interaction feedback (touch, collect, open). */
+  ping(freq = 880) {
+    if (!this.ctx || !this.master) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.05, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+    osc.connect(g);
+    g.connect(this.master);
+    osc.start(now);
+    osc.stop(now + 1.7);
+  }
+
   /** Swell the score for the birthday reveal. */
   bloom() {
     if (!this.ctx || !this.master) return;

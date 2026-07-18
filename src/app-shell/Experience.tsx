@@ -11,12 +11,14 @@ import MubiDialogue from "@/ui/MubiDialogue";
 import AchievementToast from "@/ui/AchievementToast";
 import RevealCard from "@/ui/RevealCard";
 import SettingsMenu from "@/ui/SettingsMenu";
+import Scrapbook from "@/ui/Scrapbook";
 
 import { useProgressStore } from "@/stores/progress";
 import { useMubiStore } from "@/stores/mubi";
 import { useCollectiblesStore } from "@/stores/collectibles";
 import { useSettingsStore } from "@/stores/settings";
 import { useUIStore, type RevealCard as Card } from "@/stores/ui";
+import { useLoveStore } from "@/stores/love";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { speak } from "@/ai/mubi";
 import { award } from "@/achievements/engine";
@@ -36,6 +38,7 @@ export default function Experience() {
   const timeRef = useRef<number>(0);
 
   const [showUI, setShowUI] = useState(false);
+  const [scrapbookOpen, setScrapbookOpen] = useState(false);
   const muted = useSettingsStore((s) => s.muted);
   const setMuted = useSettingsStore((s) => s.setMuted);
   const reducedMotion = useReducedMotion();
@@ -184,6 +187,7 @@ export default function Experience() {
   /* ------------------------- event handlers --------------------------- */
   const onRipple = (first: boolean) => {
     touch();
+    ambientRef.current?.ping(first ? 784 : 659);
     const p = useProgressStore.getState();
     p.addWarmth(first ? WARMTH.firstRipple : WARMTH.ripple);
     if (first) {
@@ -196,6 +200,7 @@ export default function Experience() {
 
   const onLanternTap = (id: string) => {
     touch();
+    ambientRef.current?.ping(1046);
     const c = useCollectiblesStore.getState();
     c.openLantern(id);
     const idx = Math.max(0, parseInt(id.split("-")[1] || "1", 10) - 1);
@@ -212,11 +217,15 @@ export default function Experience() {
 
   const onHeartTap = (id: string) => {
     touch();
+    ambientRef.current?.ping(988);
     const c = useCollectiblesStore.getState();
     c.addHeart(id);
     useProgressStore.getState().addWarmth(WARMTH.ripple * 2);
     const msg = drawLoveMessage("micro-love");
-    if (msg) useUIStore.getState().showCard({ kind: "love", body: msg.text });
+    if (msg) {
+      useLoveStore.getState().keep(msg.id); // remember it in the scrapbook
+      useUIStore.getState().showCard({ kind: "love", body: msg.text });
+    }
     // Heart Collector once a few are gathered
     if (c.hearts.length >= 4) award("heart-collector");
   };
@@ -293,6 +302,13 @@ export default function Experience() {
         }}
       >
         <button
+          onClick={() => setScrapbookOpen(true)}
+          aria-label="open scrapbook"
+          style={styles.iconBtn}
+        >
+          ❋
+        </button>
+        <button
           onClick={toggleMute}
           aria-label={muted ? "unmute" : "mute"}
           style={styles.iconBtn}
@@ -301,6 +317,8 @@ export default function Experience() {
         </button>
         <SettingsMenu />
       </div>
+
+      {scrapbookOpen && <Scrapbook onClose={() => setScrapbookOpen(false)} />}
 
       <div
         style={{ ...styles.tapHint, opacity: showUI ? 0.55 : 0 }}
