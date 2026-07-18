@@ -17,6 +17,7 @@ import { useMubiStore } from "@/stores/mubi";
 import { useCollectiblesStore } from "@/stores/collectibles";
 import { useSettingsStore } from "@/stores/settings";
 import { useUIStore, type RevealCard as Card } from "@/stores/ui";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { speak } from "@/ai/mubi";
 import { award } from "@/achievements/engine";
 import { WARMTH } from "@/love/love";
@@ -37,6 +38,7 @@ export default function Experience() {
   const [showUI, setShowUI] = useState(false);
   const muted = useSettingsStore((s) => s.muted);
   const setMuted = useSettingsStore((s) => s.setMuted);
+  const reducedMotion = useReducedMotion();
 
   // journey/idle bookkeeping
   const begunRef = useRef(false);
@@ -268,7 +270,11 @@ export default function Experience() {
   return (
     <main style={styles.main}>
       <div style={styles.canvasHost}>
-        <WorldCanvas opts={optsRef.current} onReady={handleReady} />
+        <WorldCanvas
+          opts={optsRef.current}
+          onReady={handleReady}
+          reducedMotion={reducedMotion}
+        />
       </div>
       <div style={styles.vignette} className="no-select" />
 

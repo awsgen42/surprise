@@ -14,9 +14,11 @@ import { WorldEngine, type WorldOptions } from "./World";
 export default function WorldScene({
   opts,
   onReady,
+  reducedMotion = false,
 }: {
   opts: WorldOptions;
   onReady: (engine: WorldEngine) => void;
+  reducedMotion?: boolean;
 }) {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
@@ -46,6 +48,10 @@ export default function WorldScene({
   useEffect(() => {
     engineRef.current?.resize(width, height);
   }, [width, height]);
+
+  useEffect(() => {
+    engineRef.current?.setReducedMotion(reducedMotion);
+  }, [reducedMotion]);
 
   useFrame((_state, delta) => {
     engineRef.current?.update(delta);

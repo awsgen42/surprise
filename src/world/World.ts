@@ -81,6 +81,7 @@ export class WorldEngine {
   private arrived = false;
   private celebrating = false;
   private celebrateRippleT = 0;
+  private reducedMotion = false;
 
   constructor(ctx: WorldContext, opts: WorldOptions) {
     this.opts = opts;
@@ -264,9 +265,10 @@ export class WorldEngine {
     pos.lerpVectors(startPos, wordPos, push);
     pos.lerpVectors(pos, shorePos, voyage);
 
-    // gentle bob once at the sea
-    const bob = Math.sin(t * 0.6) * 0.18 * voyage;
-    pos.y += bob;
+    // gentle bob once at the sea (skipped under reduced motion)
+    if (!this.reducedMotion) {
+      pos.y += Math.sin(t * 0.6) * 0.18 * voyage;
+    }
 
     this.camera.position.lerp(pos, 1 - Math.pow(0.001, dt));
 
@@ -275,12 +277,13 @@ export class WorldEngine {
     const lookSea = new THREE.Vector3(0, 1.4, -90);
     const look = new THREE.Vector3().lerpVectors(lookWord, lookSea, voyage);
 
-    // add gentle parallax from pointer + device tilt (only once at sea)
-    const freedom = voyage;
-    const lookOffX = (this.pointer.x * 6 + this.tilt.x * 8) * freedom;
-    const lookOffY = (-this.pointer.y * 3 - this.tilt.y * 5) * freedom;
-    look.x += lookOffX;
-    look.y += lookOffY;
+    // add gentle parallax from pointer + device tilt (only once at sea, and
+    // suppressed under reduced motion to keep the frame steady)
+    if (!this.reducedMotion) {
+      const freedom = voyage;
+      look.x += (this.pointer.x * 6 + this.tilt.x * 8) * freedom;
+      look.y += (-this.pointer.y * 3 - this.tilt.y * 5) * freedom;
+    }
 
     this.camera.lookAt(look);
   }
@@ -322,7 +325,8 @@ export class WorldEngine {
           (Math.random() - 0.5) * 120,
           1.6
         );
-        this.celebrateRippleT = 0.25 + Math.random() * 0.3;
+        this.celebrateRippleT =
+          (this.reducedMotion ? 0.8 : 0.25) + Math.random() * 0.3;
       }
     }
 
@@ -373,6 +377,11 @@ export class WorldEngine {
   celebrate() {
     this.celebrating = true;
     this.lanterns.releaseAll();
+  }
+
+  /** Accessibility: calm the camera (no bob/parallax) when reduced motion is on. */
+  setReducedMotion(v: boolean) {
+    this.reducedMotion = v;
   }
 
   /** Request device-orientation permission on iOS if needed. */

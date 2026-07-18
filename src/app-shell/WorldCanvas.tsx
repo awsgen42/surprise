@@ -22,9 +22,11 @@ function isMobile(): boolean {
 export default function WorldCanvas({
   opts,
   onReady,
+  reducedMotion = false,
 }: {
   opts: WorldOptions;
   onReady: (engine: WorldEngine) => void;
+  reducedMotion?: boolean;
 }) {
   const mobile = isMobile();
   const dpr = Math.min(
@@ -49,7 +51,7 @@ export default function WorldCanvas({
           gl.setClearColor(new THREE.Color(0x03040c), 1);
         }}
       >
-        <WorldScene opts={opts} onReady={onReady} />
+        <WorldScene opts={opts} onReady={onReady} reducedMotion={reducedMotion} />
       </Canvas>
     </WebGLErrorBoundary>
   );
