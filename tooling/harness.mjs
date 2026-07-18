@@ -49,11 +49,20 @@ try {
   await page.goto(`${BASE}/?debug&jump=34`, { waitUntil: "networkidle" });
   await page.waitForTimeout(1500);
   await page.mouse.click(206, 450); // begin
-  await page.waitForTimeout(4000);
 
-  const greet = await page.evaluate(
-    () => document.querySelector('[aria-live="polite"] p')?.textContent || ""
-  );
+  // poll for Mubi's greeting (robust to slow WebGL init under software GL)
+  let greet = "";
+  try {
+    await page.waitForFunction(
+      () => (document.querySelector('[aria-live="polite"] p')?.textContent || "").length > 0,
+      { timeout: 15000 }
+    );
+    greet = await page.evaluate(
+      () => document.querySelector('[aria-live="polite"] p')?.textContent || ""
+    );
+  } catch {
+    /* leaves greet empty -> check fails with detail */
+  }
   check("Mubi greets the visitor", greet.length > 0, greet);
   if (SHOTS) await page.screenshot({ path: shotDir + "01-greet.png" });
 

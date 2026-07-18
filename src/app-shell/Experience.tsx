@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { World } from "@/world/World";
+import WorldCanvas from "@/app-shell/WorldCanvas";
+import type { WorldEngine, WorldOptions } from "@/world/World";
 import { Ambient } from "@/audio/ambient";
 import { NAME, STORY_END } from "@/content/story";
 import StoryOverlay from "@/ui/StoryOverlay";
@@ -28,12 +29,10 @@ const AMBIENT_COOLDOWN_MS = 21000;
 const STARGAZER_MS = 42000;
 
 export default function Experience() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const worldRef = useRef<World | null>(null);
+  const worldRef = useRef<WorldEngine | null>(null);
   const ambientRef = useRef<Ambient | null>(null);
   const timeRef = useRef<number>(0);
 
-  const [ready, setReady] = useState(false);
   const [showUI, setShowUI] = useState(false);
   const muted = useSettingsStore((s) => s.muted);
   const setMuted = useSettingsStore((s) => s.setMuted);
@@ -48,34 +47,41 @@ export default function Experience() {
   const celebratedRef = useRef(false);
   const letterShownRef = useRef(false);
   const allLanternsRef = useRef(false);
+  const pendingBeginRef = useRef(false);
 
   const touch = () => {
     lastInteractRef.current = performance.now();
   };
 
-  /* ------------------------- world creation --------------------------- */
-  useEffect(() => {
-    if (!containerRef.current) return;
-    useProgressStore.getState().registerVisit();
+  // Stable world options (created once) — the WorldEngine adopts these when the
+  // R3F Canvas is ready. Callbacks read stores/refs, so a single capture is safe.
+  const optsRef = useRef<WorldOptions | null>(null);
+  if (!optsRef.current) {
+    optsRef.current = {
+      name: NAME,
+      onTick: (t) => {
+        timeRef.current = t;
+        tick(t);
+      },
+      onArrive: () => setShowUI(true),
+      onRipple: (first) => onRipple(first),
+      onLanternTap: (id) => onLanternTap(id),
+    };
+  }
 
-    let world: World | null = null;
-    try {
-      world = new World(containerRef.current, {
-        name: NAME,
-        onTick: (t) => {
-          timeRef.current = t;
-          tick(t);
-        },
-        onArrive: () => setShowUI(true),
-        onRipple: (first) => onRipple(first),
-        onLanternTap: (id) => onLanternTap(id),
-      });
-      world.mount();
-      worldRef.current = world;
-      setReady(true);
-    } catch (err) {
-      console.error("WebGL init failed", err);
+  const handleReady = (engine: WorldEngine) => {
+    worldRef.current = engine;
+    // if the visitor tapped "begin" before the engine finished initializing,
+    // start the journey now
+    if (pendingBeginRef.current) {
+      pendingBeginRef.current = false;
+      startJourney();
     }
+  };
+
+  /* --------------------- lifecycle: subscriptions --------------------- */
+  useEffect(() => {
+    useProgressStore.getState().registerVisit();
 
     // dev-only hooks for automated verification (query-param gated)
     if (new URLSearchParams(window.location.search).has("debug")) {
@@ -91,7 +97,6 @@ export default function Experience() {
       };
     }
 
-    // reflect stored mute state into audio when it starts
     const onAnyPointer = () => touch();
     window.addEventListener("pointerdown", onAnyPointer, { passive: true });
 
@@ -120,9 +125,8 @@ export default function Experience() {
       window.removeEventListener("pointerdown", onAnyPointer);
       unsubProgress();
       unsubMubi();
-      world?.dispose();
       ambientRef.current?.dispose();
-      worldRef.current = null;
+      // the WorldEngine is disposed by WorldScene on unmount
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -217,9 +221,15 @@ export default function Experience() {
   };
 
   /* ------------------------------ begin ------------------------------- */
-  const begin = async () => {
+  // The gate is always visible immediately; if it's tapped before the WebGL
+  // engine is ready, we queue and start the journey the moment it arrives.
+  const startJourney = async () => {
     const world = worldRef.current;
-    if (!world) return;
+    if (!world) {
+      pendingBeginRef.current = true;
+      return;
+    }
+    if (begunRef.current) return;
     await world.enableTilt();
     world.begin();
     begunRef.current = true;
@@ -243,7 +253,9 @@ export default function Experience() {
 
   return (
     <main style={styles.main}>
-      <div ref={containerRef} style={styles.canvasHost} />
+      <div style={styles.canvasHost}>
+        <WorldCanvas opts={optsRef.current} onReady={handleReady} />
+      </div>
       <div style={styles.vignette} className="no-select" />
 
       <StoryOverlay timeRef={timeRef} />
@@ -251,7 +263,7 @@ export default function Experience() {
       <AchievementToast />
       <RevealCard onClose={onCardClose} />
 
-      {ready && <StartGate onBegin={begin} />}
+      <StartGate onBegin={startJourney} />
 
       <div
         style={{

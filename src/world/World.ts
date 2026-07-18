@@ -30,13 +30,26 @@ export type WorldOptions = {
   onLanternTap?: (id: string) => void;
 };
 
-export class World {
-  private renderer: THREE.WebGLRenderer;
+/**
+ * The rendering context provided by React Three Fiber. The engine no longer
+ * owns the renderer, canvas, camera, or the RAF loop — R3F owns those (M2).
+ * The engine hosts the world systems, the post-processing composer, the story
+ * choreography and input, and is driven once per frame from `useFrame`.
+ */
+export type WorldContext = {
+  gl: THREE.WebGLRenderer;
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  width: number;
+  height: number;
+};
+
+export class WorldEngine {
+  private gl: THREE.WebGLRenderer;
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private composer: EffectComposer;
   private bloom: UnrealBloomPass;
-  private clock = new THREE.Clock();
 
   private ocean: Ocean;
   private sky: Sky;
@@ -47,9 +60,8 @@ export class World {
   private jellyfish: Jellyfish;
   private leaps: Leaps;
 
-  private raf = 0;
-  private running = false;
   private started = false;
+  private paused = false;
   private journeyTime = 0;
   private journeyStart = 0; // performance.now() when the journey began
   private jumpTo = 0; // debug: start the journey at this time offset
@@ -63,39 +75,32 @@ export class World {
 
   private opts: WorldOptions;
   private arrived = false;
-  private container: HTMLElement;
   private celebrating = false;
   private celebrateRippleT = 0;
 
-  constructor(container: HTMLElement, opts: WorldOptions) {
-    this.container = container;
+  constructor(ctx: WorldContext, opts: WorldOptions) {
     this.opts = opts;
     this.mobile =
       /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
       window.innerWidth < 820;
 
-    const w = container.clientWidth;
-    const h = container.clientHeight;
+    // R3F owns the renderer/canvas/camera; we adopt them and match Part 1's
+    // colour/tone pipeline exactly so the post-processing output is identical.
+    this.gl = ctx.gl;
+    this.gl.toneMapping = THREE.ACESFilmicToneMapping;
+    this.gl.toneMappingExposure = 0.92;
+    this.gl.outputColorSpace = THREE.SRGBColorSpace;
 
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: !this.mobile,
-      powerPreference: "high-performance",
-      alpha: false,
-    });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.mobile ? 1.6 : 2));
-    this.renderer.setSize(w, h);
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.92;
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    container.appendChild(this.renderer.domElement);
-
-    this.scene = new THREE.Scene();
+    this.scene = ctx.scene;
     this.scene.background = new THREE.Color(0x03040c);
     this.scene.fog = new THREE.FogExp2(0x04060f, 0.0038);
 
-    this.camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 1200);
+    this.camera = ctx.camera;
     this.camera.position.set(0, 5, 46);
     this.camera.lookAt(0, 8, 20);
+
+    const w = ctx.width;
+    const h = ctx.height;
 
     // world systems
     this.ocean = new Ocean(this.mobile);
@@ -128,8 +133,9 @@ export class World {
     if (dbg.has("noparticles")) this.intro.points.visible = false;
     this.jumpTo = dbg.has("jump") ? parseFloat(dbg.get("jump")!) : 0;
 
-    // postprocessing
-    this.composer = new EffectComposer(this.renderer);
+    // postprocessing — the exact Part 1 pipeline (RenderPass → UnrealBloom →
+    // OutputPass), preserved verbatim for identical visuals (ADR-0003).
+    this.composer = new EffectComposer(this.gl);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloom = new UnrealBloomPass(
       new THREE.Vector2(w, h),
@@ -191,19 +197,17 @@ export class World {
     );
   };
 
-  private onResize = () => {
-    const w = this.container.clientWidth;
-    const h = this.container.clientHeight;
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(w, h);
-    this.composer.setSize(w, h);
+  private onVisibility = () => {
+    // pause the sim while hidden (parity with Part 1; saves battery on mobile)
+    this.paused = document.hidden;
   };
 
-  private onVisibility = () => {
-    if (document.hidden) this.pause();
-    else this.resume();
-  };
+  /** Called by the R3F host when the canvas size changes. */
+  resize(w: number, h: number) {
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.composer.setSize(w, h);
+  }
 
   private bindEvents() {
     window.addEventListener("pointermove", this.onPointerMove, {
@@ -213,7 +217,6 @@ export class World {
       passive: true,
     });
     window.addEventListener("deviceorientation", this.onOrientation);
-    window.addEventListener("resize", this.onResize);
     document.addEventListener("visibilitychange", this.onVisibility);
   }
 
@@ -310,14 +313,16 @@ export class World {
 
   private dt = 0;
 
-  private loop = () => {
-    if (!this.running) return;
-    this.raf = requestAnimationFrame(this.loop);
-    const dt = Math.min(this.clock.getDelta(), 0.05);
+  /**
+   * Advance and render one frame. Called by the R3F host from `useFrame` with a
+   * render priority, so R3F yields rendering to our post-processing composer.
+   * `delta` is R3F's frame delta (seconds); we cap it for stable physics/lerps
+   * exactly as Part 1 did, while the story clock stays on wall-time.
+   */
+  update(delta: number) {
+    if (this.paused) return;
+    const dt = Math.min(delta, 0.05);
     this.dt = dt;
-    // The story follows wall-clock time so the narration keeps its intended
-    // pace even on low-end phones that dip below 60 FPS (frame dt is capped
-    // separately for stable physics/lerps).
     if (this.started)
       this.journeyTime =
         (performance.now() - this.journeyStart) / 1000 + this.jumpTo;
@@ -332,17 +337,9 @@ export class World {
 
     this.opts.onTick?.(t);
     this.composer.render();
-  };
+  }
 
   /* ------------------------------- API ----------------------------------- */
-
-  /** Begin rendering (idle preview before the journey starts). */
-  mount() {
-    if (this.running) return;
-    this.running = true;
-    this.clock.start();
-    this.loop();
-  }
 
   /** Start the story clock (called on the visitor's first tap). */
   begin() {
@@ -371,26 +368,23 @@ export class World {
     }
   }
 
-  pause() {
-    this.running = false;
-    cancelAnimationFrame(this.raf);
-  }
-
-  resume() {
-    if (this.running) return;
-    this.running = true;
-    this.clock.start();
-    this.loop();
-  }
-
   dispose() {
-    this.pause();
     window.removeEventListener("pointermove", this.onPointerMove);
     window.removeEventListener("pointerdown", this.onPointerDown);
     window.removeEventListener("deviceorientation", this.onOrientation);
-    window.removeEventListener("resize", this.onResize);
     document.removeEventListener("visibilitychange", this.onVisibility);
 
+    // remove our systems from the (R3F-owned) scene, then dispose them
+    this.scene.remove(
+      this.ocean.mesh,
+      this.sky.group,
+      this.intro.points,
+      this.motes.points,
+      this.fireflies.points,
+      this.lanterns.group,
+      this.jellyfish.points,
+      this.leaps.group
+    );
     this.ocean.dispose();
     this.sky.dispose();
     this.intro.dispose();
@@ -400,8 +394,8 @@ export class World {
     this.jellyfish.dispose();
     this.leaps.dispose();
     this.composer.dispose();
-    this.renderer.dispose();
-    if (this.renderer.domElement.parentElement === this.container)
-      this.container.removeChild(this.renderer.domElement);
+    // NOTE: the renderer/canvas are owned by R3F and disposed by <Canvas>.
+    this.scene.background = null;
+    this.scene.fog = null;
   }
 }

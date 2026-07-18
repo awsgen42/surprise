@@ -7,14 +7,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "tsc --noEmit && node tooling/check-boundaries.mjs",
     "lint:boundaries": "node tooling/check-boundaries.mjs",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "harness": "node tooling/harness.mjs",
     "verify": "npm run lint:boundaries && npm run test"
   },
   "dependencies": {
+    "@react-three/fiber": "^9.6.1",
     "next": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
