@@ -7,7 +7,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:boundaries": "node tooling/check-boundaries.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "harness": "node tooling/harness.mjs",
+    "verify": "npm run lint:boundaries && npm run test"
   },
   "dependencies": {
     "next": "^16.0.0",
@@ -17,10 +22,16 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.170.0",
-    "typescript": "^5.6.0"
+    "jsdom": "^25.0.1",
+    "postcss": "^8.5.19",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.9"
   }
 }

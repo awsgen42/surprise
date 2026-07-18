@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --ink: #eaf2ff;
   --ink-soft: rgba(226, 236, 255, 0.72);
