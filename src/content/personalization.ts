@@ -16,7 +16,8 @@ export interface Personalization {
 export const personalization: Personalization = {
   her_name: "Mubarra",
   his_name: "Awais",
-  pet_name: "my love",
+  // used as "my {pet_name}", so keep this a bare endearment (no leading "my")
+  pet_name: "love",
   the_letter:
     "Mubarra — I couldn't fit what you mean to me into words, so I built you " +
     "a sky instead. Every star here is a night I spent grateful for you. " +
@@ -46,7 +47,7 @@ function fallbackFor(key: string): string {
     case "his_name":
       return "someone who loves you";
     case "pet_name":
-      return "my love";
+      return "love";
     default:
       return "";
   }

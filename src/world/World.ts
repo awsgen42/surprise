@@ -9,6 +9,7 @@ import { Sky } from "./Sky";
 import { IntroParticles, AirMotes, Fireflies } from "./Particles";
 import { Lanterns, Jellyfish, Leaps } from "./Life";
 import { Hearts } from "./Hearts";
+import { Celebration } from "./Celebration";
 
 function clamp01(v: number) {
   return Math.max(0, Math.min(1, v));
@@ -63,6 +64,7 @@ export class WorldEngine {
   private jellyfish: Jellyfish;
   private leaps: Leaps;
   private hearts: Hearts;
+  private celebration: Celebration;
 
   private started = false;
   private paused = false;
@@ -118,6 +120,7 @@ export class WorldEngine {
     this.leaps = new Leaps(this.mobile ? 3 : 4);
     this.leaps.onSplash = (x, z) => this.rippleAtWorld(x, z, 1.2);
     this.hearts = new Hearts(this.mobile ? 5 : 7);
+    this.celebration = new Celebration(this.mobile);
 
     this.scene.add(
       this.ocean.mesh,
@@ -128,7 +131,8 @@ export class WorldEngine {
       this.lanterns.group,
       this.jellyfish.points,
       this.leaps.group,
-      this.hearts.group
+      this.hearts.group,
+      this.celebration.group
     );
 
     this.ocean.setMoon(this.sky.moon.dir, this.sky.moon.color);
@@ -315,9 +319,10 @@ export class WorldEngine {
       Math.max(skyReveal * 0.6, seaReveal)
     );
 
-    // celebration: the sea sparkles with rising rings of light
+    // celebration: the sea sparkles with rising rings of light + FX
     if (this.celebrating) {
       this.bloom.strength = this.mobile ? 0.62 : 0.78;
+      this.celebration.update(t, this.dt, this.camera);
       this.celebrateRippleT -= this.dt;
       if (this.celebrateRippleT <= 0) {
         this.ocean.addRipple(
@@ -377,11 +382,13 @@ export class WorldEngine {
   celebrate() {
     this.celebrating = true;
     this.lanterns.releaseAll();
+    this.celebration.trigger(this.journeyTime);
   }
 
   /** Accessibility: calm the camera (no bob/parallax) when reduced motion is on. */
   setReducedMotion(v: boolean) {
     this.reducedMotion = v;
+    this.celebration.setReduced(v);
   }
 
   /** Request device-orientation permission on iOS if needed. */
@@ -414,7 +421,8 @@ export class WorldEngine {
       this.lanterns.group,
       this.jellyfish.points,
       this.leaps.group,
-      this.hearts.group
+      this.hearts.group,
+      this.celebration.group
     );
     this.ocean.dispose();
     this.sky.dispose();
@@ -425,6 +433,7 @@ export class WorldEngine {
     this.jellyfish.dispose();
     this.leaps.dispose();
     this.hearts.dispose();
+    this.celebration.dispose();
     this.composer.dispose();
     // NOTE: the renderer/canvas are owned by R3F and disposed by <Canvas>.
     this.scene.background = null;
