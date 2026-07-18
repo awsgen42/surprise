@@ -10,6 +10,7 @@ import { IntroParticles, AirMotes, Fireflies } from "./Particles";
 import { Lanterns, Jellyfish, Leaps } from "./Life";
 import { Hearts } from "./Hearts";
 import { Celebration } from "./Celebration";
+import { Fish } from "./Fish";
 
 function clamp01(v: number) {
   return Math.max(0, Math.min(1, v));
@@ -65,6 +66,7 @@ export class WorldEngine {
   private leaps: Leaps;
   private hearts: Hearts;
   private celebration: Celebration;
+  private fish: Fish;
 
   private started = false;
   private paused = false;
@@ -121,6 +123,7 @@ export class WorldEngine {
     this.leaps.onSplash = (x, z) => this.rippleAtWorld(x, z, 1.2);
     this.hearts = new Hearts(this.mobile ? 5 : 7);
     this.celebration = new Celebration(this.mobile);
+    this.fish = new Fish(this.mobile ? 120 : 240);
 
     this.scene.add(
       this.ocean.mesh,
@@ -132,7 +135,8 @@ export class WorldEngine {
       this.jellyfish.points,
       this.leaps.group,
       this.hearts.group,
-      this.celebration.group
+      this.celebration.group,
+      this.fish.points
     );
 
     this.ocean.setMoon(this.sky.moon.dir, this.sky.moon.color);
@@ -207,6 +211,7 @@ export class WorldEngine {
     if (hit) {
       const local = this.ocean.mesh.worldToLocal(hit.point.clone());
       this.ocean.addRipple(local.x, local.y, 1.4);
+      this.fish.gatherAt(hit.point, this.journeyTime); // fish flock to the light
       const first = !this.firstRippleDone;
       this.firstRippleDone = true;
       this.opts.onRipple?.(first);
@@ -311,6 +316,7 @@ export class WorldEngine {
     this.jellyfish.update(t, seaReveal);
     this.leaps.update(this.dt, seaReveal);
     this.hearts.update(t, seaReveal, this.camera);
+    this.fish.update(t, seaReveal);
 
     // bloom eases up gently as the world brightens
     this.bloom.strength = lerp(
@@ -422,7 +428,8 @@ export class WorldEngine {
       this.jellyfish.points,
       this.leaps.group,
       this.hearts.group,
-      this.celebration.group
+      this.celebration.group,
+      this.fish.points
     );
     this.ocean.dispose();
     this.sky.dispose();
@@ -434,6 +441,7 @@ export class WorldEngine {
     this.leaps.dispose();
     this.hearts.dispose();
     this.celebration.dispose();
+    this.fish.dispose();
     this.composer.dispose();
     // NOTE: the renderer/canvas are owned by R3F and disposed by <Canvas>.
     this.scene.background = null;
