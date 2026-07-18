@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useUIStore, type RevealCard as Card } from "@/stores/ui";
 
 // Displays a memory or the birthday letter as a glass card. `onClose` lets the
@@ -12,6 +13,19 @@ export default function RevealCard({
 }) {
   const activeCard = useUIStore((s) => s.activeCard);
   const hideCard = useUIStore((s) => s.hideCard);
+
+  useEffect(() => {
+    if (!activeCard) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        const card = activeCard;
+        hideCard();
+        onClose?.(card);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeCard, hideCard, onClose]);
 
   if (!activeCard) return null;
 

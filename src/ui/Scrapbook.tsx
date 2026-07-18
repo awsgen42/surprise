@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useCollectiblesStore } from "@/stores/collectibles";
 import { useLoveStore } from "@/stores/love";
 import { MEMORIES } from "@/content/memories";
@@ -16,6 +17,14 @@ export default function Scrapbook({ onClose }: { onClose: () => void }) {
   const collected = useLoveStore((s) => s.collected);
 
   const notes = LOVE_MESSAGES.filter((m) => collected.includes(m.id));
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   return (
     <div style={styles.backdrop} onClick={onClose}>
