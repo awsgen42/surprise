@@ -59,7 +59,8 @@ export default function AchievementToast() {
 const styles: Record<string, React.CSSProperties> = {
   wrap: {
     position: "fixed",
-    top: "calc(env(safe-area-inset-top) + 16px)",
+    // sit below the top-right controls row so they never overlap
+    top: "calc(env(safe-area-inset-top) + 74px)",
     left: 0,
     right: 0,
     display: "flex",

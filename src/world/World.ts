@@ -12,6 +12,7 @@ import { Hearts } from "./Hearts";
 import { Celebration } from "./Celebration";
 import { Fish } from "./Fish";
 import { Butterflies } from "./Butterflies";
+import { detectTier } from "@/services/Capability";
 
 function clamp01(v: number) {
   return Math.max(0, Math.min(1, v));
@@ -113,19 +114,27 @@ export class WorldEngine {
     const w = ctx.width;
     const h = ctx.height;
 
+    // Device-tier density (Blueprint §17): weaker phones scale down the heavy
+    // ambient particle systems. high/mid keep the current counts (no baseline
+    // change); only low/potato are reduced. Collectibles/creatures with a fixed
+    // gameplay role (lanterns, hearts, leaps, butterflies) are left intact.
+    const tier = detectTier();
+    const density = tier === "potato" ? 0.4 : tier === "low" ? 0.6 : 1;
+    const c = (n: number) => Math.max(3, Math.round(n * density));
+
     // world systems
     this.ocean = new Ocean(this.mobile);
     this.sky = new Sky(this.mobile);
     this.intro = new IntroParticles(opts.name, this.mobile);
-    this.motes = new AirMotes(this.mobile ? 180 : 320);
-    this.fireflies = new Fireflies(this.mobile ? 40 : 70);
+    this.motes = new AirMotes(c(this.mobile ? 180 : 320));
+    this.fireflies = new Fireflies(c(this.mobile ? 40 : 70));
     this.lanterns = new Lanterns(this.mobile ? 6 : 10);
-    this.jellyfish = new Jellyfish(this.mobile ? 18 : 32);
+    this.jellyfish = new Jellyfish(c(this.mobile ? 18 : 32));
     this.leaps = new Leaps(this.mobile ? 3 : 4);
     this.leaps.onSplash = (x, z) => this.rippleAtWorld(x, z, 1.2);
     this.hearts = new Hearts(this.mobile ? 5 : 7);
     this.celebration = new Celebration(this.mobile);
-    this.fish = new Fish(this.mobile ? 120 : 240);
+    this.fish = new Fish(c(this.mobile ? 120 : 240));
     this.butterflies = new Butterflies(this.mobile ? 4 : 7);
 
     this.scene.add(
