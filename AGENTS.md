@@ -13,8 +13,9 @@
   detail*: dialogue-category taxonomy, the Love Message Library, the interaction
   catalogue, memory presentation, achievements + rewards, and the birthday flow.
 
-All implementation must remain consistent with all four (plus the roadmap in
-`docs/IMPLEMENTATION_ROADMAP.md`).
+All implementation must remain consistent with all four, plus the master build
+plan in [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md) (milestones, component map,
+state flow, performance & testing strategy — the development source of truth).
 
 Key rules (see the blueprint for full detail):
 

@@ -93,8 +93,12 @@ Two canonical design documents govern all future work:
   interaction-grammar catalogue for every entity, the memory presentation system
   (timeline, scrapbook, glass frames), the hidden achievement + reward
   catalogue, and the complete birthday sequence.
-- **[`docs/IMPLEMENTATION_ROADMAP.md`](docs/IMPLEMENTATION_ROADMAP.md)** — the
-  milestone plan (A shipped; B–J planned).
+- **[`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md)** — the master engineering
+  execution plan: 15 milestones (goal, components, dependencies, complexity,
+  risks, testing, exit criteria), the dependency graph, the component map with
+  ownership, state-flow, and per-system performance & testing strategy.
+- **[`docs/IMPLEMENTATION_ROADMAP.md`](docs/IMPLEMENTATION_ROADMAP.md)** — a
+  lightweight status index (Milestone A shipped; the rest planned).
 
 Contributor rules are in [`AGENTS.md`](AGENTS.md).
 

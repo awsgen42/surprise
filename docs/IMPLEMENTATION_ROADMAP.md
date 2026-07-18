@@ -1,8 +1,12 @@
-# 🛠️ Implementation Roadmap
+# 🛠️ Implementation Roadmap (quick index)
 
-> Turns the four specs (Part 1 vision, Part 2 blueprint, Part 3 world design,
-> Part 4 Mubi) into an ordered, buildable plan. Each milestone is independently
-> shippable and testable, and preserves every prior specification.
+> **The authoritative build strategy is [`docs/MASTER_PLAN.md`](MASTER_PLAN.md)**
+> (milestones with goals, dependencies, complexity, risks, testing, exit
+> criteria; component map; state flow; performance & testing strategy). This file
+> is a lightweight status index that mirrors it.
+>
+> Turns the specs (Parts 1–5) into an ordered, buildable plan. Each milestone is
+> independently shippable and testable, and preserves every prior specification.
 
 ## Status legend
 ✅ done · 🚧 in progress (this build) · ⏳ planned
