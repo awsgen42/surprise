@@ -72,11 +72,22 @@ dips; rendering pauses when the tab is hidden.
 
 ---
 
-## 🛣️ What's next (Part 2)
+## 🏗️ Architecture
 
-The **Mubi AI Spirit** — a companion with her own personality, a memory of
-Awais & Mubarra's story, dynamic conversation, and an emotional dialogue
-engine. The most personal part of this world.
+The full engineering architecture for the expanded, multi-scene world lives in
+**[`docs/ENGINEERING_BLUEPRINT.md`](docs/ENGINEERING_BLUEPRINT.md)** — the
+canonical blueprint all future implementation follows (scene system, state,
+asset loading, rendering strategy, audio, the Mubi AI module, save system,
+performance budget, accessibility, milestones). Contributor rules are in
+[`AGENTS.md`](AGENTS.md).
+
+## 🛣️ What's next (Part 2 → beyond)
+
+Per the blueprint, the world grows into independent scenes (Shore → Open Ocean
+→ Lantern Sea → Memory Islands → Moon Garden → Secret Cave → Birthday →
+Ending) and gains the **Mubi AI Spirit** — a companion with her own
+personality, a memory of Awais & Mubarra's story, dynamic conversation, and an
+emotional dialogue engine. The most personal part of this world.
 
 ---
 
