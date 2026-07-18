@@ -24,6 +24,10 @@ export type WorldOptions = {
   name: string;
   onTick?: (journeyTime: number) => void;
   onArrive?: () => void;
+  /** Fired when the visitor touches the water (after the ripple is spawned). */
+  onRipple?: (first: boolean) => void;
+  /** Fired when a memory-carrying lantern is tapped. */
+  onLanternTap?: (id: string) => void;
 };
 
 export class World {
@@ -60,6 +64,8 @@ export class World {
   private opts: WorldOptions;
   private arrived = false;
   private container: HTMLElement;
+  private celebrating = false;
+  private celebrateRippleT = 0;
 
   constructor(container: HTMLElement, opts: WorldOptions) {
     this.container = container;
@@ -145,14 +151,34 @@ export class World {
     this.pointerTarget.set(nx, ny);
   };
 
+  private firstRippleDone = false;
+
   private onPointerDown = (e: PointerEvent) => {
     const nx = (e.clientX / window.innerWidth) * 2 - 1;
     const ny = -((e.clientY / window.innerHeight) * 2 - 1);
     this.raycaster.setFromCamera(new THREE.Vector2(nx, ny), this.camera);
+
+    // memory lanterns take precedence over the water
+    const lanternHits = this.raycaster.intersectObjects(
+      this.lanterns.getTapTargets(),
+      true
+    );
+    if (lanternHits.length) {
+      const id = this.lanterns.resolveLanternId(lanternHits[0].object);
+      if (id && this.lanterns.isCarrier(id) && !this.lanterns.isOpened(id)) {
+        this.lanterns.markOpened(id);
+        this.opts.onLanternTap?.(id);
+        return;
+      }
+    }
+
     const hit = this.raycaster.intersectObject(this.ocean.mesh, false)[0];
     if (hit) {
       const local = this.ocean.mesh.worldToLocal(hit.point.clone());
       this.ocean.addRipple(local.x, local.y, 1.4);
+      const first = !this.firstRippleDone;
+      this.firstRippleDone = true;
+      this.opts.onRipple?.(first);
     }
   };
 
@@ -262,6 +288,20 @@ export class World {
       Math.max(skyReveal * 0.6, seaReveal)
     );
 
+    // celebration: the sea sparkles with rising rings of light
+    if (this.celebrating) {
+      this.bloom.strength = this.mobile ? 0.62 : 0.78;
+      this.celebrateRippleT -= this.dt;
+      if (this.celebrateRippleT <= 0) {
+        this.ocean.addRipple(
+          (Math.random() - 0.5) * 120,
+          (Math.random() - 0.5) * 120,
+          1.6
+        );
+        this.celebrateRippleT = 0.25 + Math.random() * 0.3;
+      }
+    }
+
     if (!this.arrived && t > 27.5) {
       this.arrived = true;
       this.opts.onArrive?.();
@@ -309,6 +349,12 @@ export class World {
     this.started = true;
     this.journeyStart = performance.now();
     this.journeyTime = 0;
+  }
+
+  /** Trigger the birthday celebration: rising lanterns + sparkling sea. */
+  celebrate() {
+    this.celebrating = true;
+    this.lanterns.releaseAll();
   }
 
   /** Request device-orientation permission on iOS if needed. */

@@ -4,62 +4,153 @@ import * as THREE from "three";
 // Warm paper lanterns drifting on the waves — a soft counterpoint to the cool
 // bioluminescence.
 
+type LanternItem = {
+  mesh: THREE.Group;
+  phase: number;
+  speed: number;
+  carrier: boolean;
+  opened: boolean;
+  releasing: boolean; // rising away after being opened / celebrating
+};
+
 export class Lanterns {
   group: THREE.Group;
-  private items: { mesh: THREE.Group; phase: number; speed: number }[] = [];
+  private items: LanternItem[] = [];
   private haloMat: THREE.ShaderMaterial;
+  private carrierHaloMat: THREE.ShaderMaterial;
 
-  constructor(count: number) {
+  constructor(count: number, carrierCount = 3) {
     this.group = new THREE.Group();
+
+    const haloFrag = (extra: string) => /* glsl */ `
+      varying vec2 vUv; uniform vec3 uColor; uniform float uTime;
+      void main(){
+        float d = length(vUv - 0.5);
+        float a = smoothstep(0.5, 0.0, d);
+        ${extra}
+        gl_FragColor = vec4(uColor, pow(a,1.6));
+      }`;
+    const haloVert = /* glsl */ `
+      varying vec2 vUv;
+      void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`;
+
     this.haloMat = new THREE.ShaderMaterial({
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
-      uniforms: { uColor: { value: new THREE.Color(0xffb15a) } },
-      vertexShader: /* glsl */ `
-        varying vec2 vUv;
-        void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-      fragmentShader: /* glsl */ `
-        varying vec2 vUv; uniform vec3 uColor;
-        void main(){
-          float d = length(vUv - 0.5);
-          float a = smoothstep(0.5, 0.0, d);
-          gl_FragColor = vec4(uColor, pow(a,1.6));
-        }`,
+      uniforms: { uColor: { value: new THREE.Color(0xffb15a) }, uTime: { value: 0 } },
+      vertexShader: haloVert,
+      fragmentShader: haloFrag(""),
+    });
+    // carriers glow a touch brighter and breathe, inviting a tap
+    this.carrierHaloMat = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      uniforms: { uColor: { value: new THREE.Color(0xffd07a) }, uTime: { value: 0 } },
+      vertexShader: haloVert,
+      fragmentShader: haloFrag("a *= 0.75 + 0.35 * sin(uTime * 1.6);"),
     });
 
     const bodyGeo = new THREE.SphereGeometry(0.55, 16, 12);
     const bodyMat = new THREE.MeshBasicMaterial({ color: 0xffcaa0 });
+    const carrierBodyMat = new THREE.MeshBasicMaterial({ color: 0xffe1b0 });
 
+    let carriersAssigned = 0;
     for (let i = 0; i < count; i++) {
+      // spread carriers deterministically so they're reachable
+      const carrier =
+        carriersAssigned < carrierCount &&
+        i % Math.max(1, Math.floor(count / carrierCount)) === 0;
+      if (carrier) carriersAssigned++;
+
       const g = new THREE.Group();
-      const body = new THREE.Mesh(bodyGeo, bodyMat);
-      body.scale.y = 1.3;
+      const body = new THREE.Mesh(bodyGeo, carrier ? carrierBodyMat : bodyMat);
+      body.scale.setScalar(carrier ? 1.25 : 1);
+      body.scale.y *= 1.3;
       g.add(body);
-      const halo = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), this.haloMat);
+      const halo = new THREE.Mesh(
+        new THREE.PlaneGeometry(carrier ? 8 : 6, carrier ? 8 : 6),
+        carrier ? this.carrierHaloMat : this.haloMat
+      );
       g.add(halo);
       g.userData.halo = halo;
+      if (carrier) g.userData.lanternId = `lantern-${carriersAssigned}`;
 
-      const x = (Math.random() - 0.5) * 90;
-      const z = 5 - Math.random() * 90;
+      // carriers kept nearer the visitor so they can be found & tapped
+      const x = (Math.random() - 0.5) * (carrier ? 40 : 90);
+      const z = carrier ? -8 - Math.random() * 40 : 5 - Math.random() * 90;
       g.position.set(x, 1.2, z);
       this.group.add(g);
       this.items.push({
         mesh: g,
         phase: Math.random() * Math.PI * 2,
         speed: 0.4 + Math.random() * 0.4,
+        carrier,
+        opened: false,
+        releasing: false,
       });
     }
   }
 
+  /** Objects to raycast for taps (carrier lantern subtrees). */
+  getTapTargets(): THREE.Object3D[] {
+    return this.items.filter((i) => i.carrier && !i.opened).map((i) => i.mesh);
+  }
+
+  resolveLanternId(obj: THREE.Object3D | null): string | null {
+    let o: THREE.Object3D | null = obj;
+    while (o) {
+      if (o.userData?.lanternId) return o.userData.lanternId as string;
+      o = o.parent;
+    }
+    return null;
+  }
+
+  isCarrier(id: string) {
+    return this.items.some((i) => i.mesh.userData.lanternId === id && i.carrier);
+  }
+  isOpened(id: string) {
+    const it = this.items.find((i) => i.mesh.userData.lanternId === id);
+    return !!it?.opened;
+  }
+  get carrierCount() {
+    return this.items.filter((i) => i.carrier).length;
+  }
+  get openedCount() {
+    return this.items.filter((i) => i.carrier && i.opened).length;
+  }
+
+  /** Mark a carrier opened → it releases and rises to the sky. */
+  markOpened(id: string) {
+    const it = this.items.find((i) => i.mesh.userData.lanternId === id);
+    if (it) {
+      it.opened = true;
+      it.releasing = true;
+    }
+  }
+
+  /** Celebration: release every lantern skyward. */
+  releaseAll() {
+    for (const it of this.items) it.releasing = true;
+  }
+
   update(t: number, reveal: number, camera: THREE.Camera) {
     this.group.visible = reveal > 0.25;
+    this.haloMat.uniforms.uTime.value = t;
+    this.carrierHaloMat.uniforms.uTime.value = t;
     for (const it of this.items) {
       const m = it.mesh;
-      m.position.y = 1.0 + Math.sin(t * it.speed + it.phase) * 0.35;
-      m.position.x += Math.sin(t * 0.1 + it.phase) * 0.006;
-      m.position.z -= 0.006 * it.speed; // slow drift outward
-      if (m.position.z < -95) m.position.z = 8;
+      if (it.releasing) {
+        m.position.y += 0.06 + it.speed * 0.05; // drift upward
+        m.rotation.z += 0.002;
+        if (m.position.y > 60) m.visible = false;
+      } else {
+        m.position.y = 1.0 + Math.sin(t * it.speed + it.phase) * 0.35;
+        m.position.x += Math.sin(t * 0.1 + it.phase) * 0.006;
+        m.position.z -= 0.006 * it.speed;
+        if (m.position.z < -95) m.position.z = 8;
+      }
       (m.userData.halo as THREE.Mesh).lookAt(camera.position);
     }
   }
@@ -70,6 +161,7 @@ export class Lanterns {
       m.geometry?.dispose();
     });
     this.haloMat.dispose();
+    this.carrierHaloMat.dispose();
   }
 }
 
