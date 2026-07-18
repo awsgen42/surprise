@@ -341,6 +341,16 @@ export class WorldEngine {
       }
     }
 
+    // World Breath — a slow (~20s) global pulse so the whole world feels like it
+    // inhales and exhales. Very subtle; suppressed under reduced motion.
+    if (!this.reducedMotion) {
+      const breath = 0.5 + 0.5 * Math.sin(t * 0.31);
+      this.bloom.strength *= 1 + (breath - 0.5) * 0.06;
+      this.gl.toneMappingExposure = 0.92 * (1 + (breath - 0.5) * 0.03);
+    } else {
+      this.gl.toneMappingExposure = 0.92;
+    }
+
     if (!this.arrived && t > 27.5) {
       this.arrived = true;
       this.opts.onArrive?.();
