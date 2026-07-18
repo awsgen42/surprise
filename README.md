@@ -87,6 +87,14 @@ Two canonical design documents govern all future work:
   personality, the Awais↔Mubi↔Mubarra relationship, the gradual reveal,
   conversation & dialogue architecture, memory, greetings, hints, celebration,
   emotional-safety & privacy rules, and sample dialogue trees for every stage.
+- **[`docs/EMOTIONAL_SYSTEMS.md`](docs/EMOTIONAL_SYSTEMS.md)** — *the soul, in
+  detail*: the Mubi dialogue-category taxonomy, the Love Message Library (100+
+  messages with rarity & no-repeat rotation, anniversary/seasonal support), the
+  interaction-grammar catalogue for every entity, the memory presentation system
+  (timeline, scrapbook, glass frames), the hidden achievement + reward
+  catalogue, and the complete birthday sequence.
+- **[`docs/IMPLEMENTATION_ROADMAP.md`](docs/IMPLEMENTATION_ROADMAP.md)** — the
+  milestone plan (A shipped; B–J planned).
 
 Contributor rules are in [`AGENTS.md`](AGENTS.md).
 

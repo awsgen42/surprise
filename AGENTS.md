@@ -9,8 +9,12 @@
 - [`docs/MUBI_AI.md`](docs/MUBI_AI.md) — the canonical Mubi AI specification
   (*the emotional heart*): personality, reveal pacing, dialogue architecture,
   memory, emotional-safety & privacy rules, and sample dialogue trees.
+- [`docs/EMOTIONAL_SYSTEMS.md`](docs/EMOTIONAL_SYSTEMS.md) — *the soul, in
+  detail*: dialogue-category taxonomy, the Love Message Library, the interaction
+  catalogue, memory presentation, achievements + rewards, and the birthday flow.
 
-All implementation must remain consistent with all three.
+All implementation must remain consistent with all four (plus the roadmap in
+`docs/IMPLEMENTATION_ROADMAP.md`).
 
 Key rules (see the blueprint for full detail):
 
