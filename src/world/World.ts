@@ -11,6 +11,7 @@ import { Lanterns, Jellyfish, Leaps } from "./Life";
 import { Hearts } from "./Hearts";
 import { Celebration } from "./Celebration";
 import { Fish } from "./Fish";
+import { Butterflies } from "./Butterflies";
 
 function clamp01(v: number) {
   return Math.max(0, Math.min(1, v));
@@ -67,6 +68,7 @@ export class WorldEngine {
   private hearts: Hearts;
   private celebration: Celebration;
   private fish: Fish;
+  private butterflies: Butterflies;
 
   private started = false;
   private paused = false;
@@ -124,6 +126,7 @@ export class WorldEngine {
     this.hearts = new Hearts(this.mobile ? 5 : 7);
     this.celebration = new Celebration(this.mobile);
     this.fish = new Fish(this.mobile ? 120 : 240);
+    this.butterflies = new Butterflies(this.mobile ? 4 : 7);
 
     this.scene.add(
       this.ocean.mesh,
@@ -136,7 +139,8 @@ export class WorldEngine {
       this.leaps.group,
       this.hearts.group,
       this.celebration.group,
-      this.fish.points
+      this.fish.points,
+      this.butterflies.group
     );
 
     this.ocean.setMoon(this.sky.moon.dir, this.sky.moon.color);
@@ -317,6 +321,7 @@ export class WorldEngine {
     this.leaps.update(this.dt, seaReveal);
     this.hearts.update(t, seaReveal, this.camera);
     this.fish.update(t, seaReveal);
+    this.butterflies.update(t, seaReveal, this.camera);
 
     // bloom eases up gently as the world brightens
     this.bloom.strength = lerp(
@@ -439,7 +444,8 @@ export class WorldEngine {
       this.leaps.group,
       this.hearts.group,
       this.celebration.group,
-      this.fish.points
+      this.fish.points,
+      this.butterflies.group
     );
     this.ocean.dispose();
     this.sky.dispose();
@@ -452,6 +458,7 @@ export class WorldEngine {
     this.hearts.dispose();
     this.celebration.dispose();
     this.fish.dispose();
+    this.butterflies.dispose();
     this.composer.dispose();
     // NOTE: the renderer/canvas are owned by R3F and disposed by <Canvas>.
     this.scene.background = null;
