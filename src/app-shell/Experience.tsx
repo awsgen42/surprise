@@ -39,6 +39,7 @@ export default function Experience() {
 
   const [showUI, setShowUI] = useState(false);
   const [scrapbookOpen, setScrapbookOpen] = useState(false);
+  const [hintGone, setHintGone] = useState(false);
   const muted = useSettingsStore((s) => s.muted);
   const setMuted = useSettingsStore((s) => s.setMuted);
   const reducedMotion = useReducedMotion();
@@ -187,6 +188,7 @@ export default function Experience() {
   /* ------------------------- event handlers --------------------------- */
   const onRipple = (first: boolean) => {
     touch();
+    if (!hintGone) setHintGone(true);
     ambientRef.current?.ping(first ? 784 : 659);
     const p = useProgressStore.getState();
     p.addWarmth(first ? WARMTH.firstRipple : WARMTH.ripple);
@@ -200,6 +202,7 @@ export default function Experience() {
 
   const onLanternTap = (id: string) => {
     touch();
+    if (!hintGone) setHintGone(true);
     ambientRef.current?.ping(1046);
     const c = useCollectiblesStore.getState();
     c.openLantern(id);
@@ -217,6 +220,7 @@ export default function Experience() {
 
   const onHeartTap = (id: string) => {
     touch();
+    if (!hintGone) setHintGone(true);
     ambientRef.current?.ping(988);
     const c = useCollectiblesStore.getState();
     c.addHeart(id);
@@ -321,7 +325,7 @@ export default function Experience() {
       {scrapbookOpen && <Scrapbook onClose={() => setScrapbookOpen(false)} />}
 
       <div
-        style={{ ...styles.tapHint, opacity: showUI ? 0.55 : 0 }}
+        style={{ ...styles.tapHint, opacity: showUI && !hintGone ? 0.55 : 0 }}
         className="no-select"
       >
         touch the water · find the glowing lanterns
