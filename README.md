@@ -74,12 +74,17 @@ dips; rendering pauses when the tab is hidden.
 
 ## 🏗️ Architecture
 
-The full engineering architecture for the expanded, multi-scene world lives in
-**[`docs/ENGINEERING_BLUEPRINT.md`](docs/ENGINEERING_BLUEPRINT.md)** — the
-canonical blueprint all future implementation follows (scene system, state,
-asset loading, rendering strategy, audio, the Mubi AI module, save system,
-performance budget, accessibility, milestones). Contributor rules are in
-[`AGENTS.md`](AGENTS.md).
+Two canonical design documents govern all future work:
+
+- **[`docs/ENGINEERING_BLUEPRINT.md`](docs/ENGINEERING_BLUEPRINT.md)** — *how it
+  is engineered*: scene system, state, asset loading, rendering strategy, audio,
+  the Mubi AI module, save system, performance budget, accessibility, milestones.
+- **[`docs/WORLD_DESIGN.md`](docs/WORLD_DESIGN.md)** — *what the world is and how
+  it feels*: ocean, sky, moon, lanterns, wildlife, flora, weather, camera
+  language, lighting, shaders, interactions, islands, and the per-environment
+  soundscape — plus proposed enhancements and their trade-offs.
+
+Contributor rules are in [`AGENTS.md`](AGENTS.md).
 
 ## 🛣️ What's next (Part 2 → beyond)
 

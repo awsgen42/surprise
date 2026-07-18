@@ -1,9 +1,13 @@
 # Working in this repository
 
-**Before implementing anything, read
-[`docs/ENGINEERING_BLUEPRINT.md`](docs/ENGINEERING_BLUEPRINT.md).** It is the
-canonical architecture for the project and all implementation must remain
-consistent with it.
+**Before implementing anything, read both canonical design docs:**
+
+- [`docs/ENGINEERING_BLUEPRINT.md`](docs/ENGINEERING_BLUEPRINT.md) — the
+  architecture (*how it's built*).
+- [`docs/WORLD_DESIGN.md`](docs/WORLD_DESIGN.md) — the world design bible
+  (*what the world is and how it feels*), including per-system trade-offs.
+
+All implementation must remain consistent with both.
 
 Key rules (see the blueprint for full detail):
 
