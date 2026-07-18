@@ -216,52 +216,73 @@ this bloom-heavy, dark scene, and it keeps hundreds of lanterns affordable.
 ## 6. 🐬 Wildlife
 
 **Feeling:** the sea is inhabited and gentle — life appears like a gift, never
-on demand, and each sighting is a small "oh." Dolphins play, a whale surfaces
-far away like a slow miracle, turtles glide, jellyfish pulse, fish schools
-shimmer.
+on demand, and each sighting is a small "oh." Creatures are not game NPCs; they
+simply *live here*, and occasionally become curious about her.
 
-**Behavior & staging:**
-- **Dolphins:** arc and leap in the near-mid distance, trailing bioluminescence;
-  occasionally in playful pairs; can be drawn toward the visitor's wake.
-- **Whales:** *far-horizon* silhouettes that surface, spout, and slowly sound —
-  rare, awe-scaled, never close enough to threaten the intimacy.
-- **Turtles:** glide calmly near islands/shallows, gentle and unhurried.
-- **Jellyfish:** glowing bells pulsing just beneath the surface (Part 1 has
-  these as GPU shader points — kept and enriched).
-- **Fish schools:** shimmering **boids-lite** shoals that part around the
-  visitor and catch the moonlight.
+**Art direction — stylized cinematic realism (confirmed).** Roughly **80%
+realistic** anatomy and movement, **20% magical** enhancement
+(bioluminescence, soft glow, subtle particle trails, graceful behavior).
+Believable and elegant, "a dream inspired by the real ocean" — never
+documentary-photoreal, never cartoon/fantasy. All motion is calm and peaceful;
+nothing aggressive, frightening, or chaotic.
 
-**Tech & shaders:**
-- **Stylized, not photoreal.** Impressionistic forms — clean silhouettes with
-  bioluminescent rim/accent and vertex-shader motion (spine sine for
-  swim/leap) — rather than heavy rigged photoreal models.
-- **Dolphins/turtles/whales:** low-poly `.glb` (Draco), **vertex-animated** or
-  light skeletal; **instanced** where multiple; LOD by distance; whales as
-  distant billboarded/low-LOD silhouettes.
-- **Fish schools:** **GPU boids** (FBO simulation) or instanced with a shared
-  flow field — thousands of fish, near-zero CPU.
-- **Creature events** are orchestrated by an `EventDirector` (spatialized: a
-  whale call comes from where the whale is) and can react to the wake trail RT.
+**The roster:**
+- **Dolphins** — arc and leap in the near-mid distance trailing bioluminescence;
+  playful pairs; **swim alongside her for a few moments** when curious.
+- **Humpback whales** — *far-horizon* only, surfacing/spouting/sounding as a
+  slow miracle; appear **only at special emotional moments**, never close.
+- **Sea turtles** — glide slowly **beneath the glowing water**, unhurried.
+- **Jellyfish** — glowing bells pulsing beneath the surface; **naturally
+  illuminate darker areas** (Part 1 base, enriched).
+- **Schools of tropical fish** — shimmering shoals that **briefly gather around
+  glowing ripples she makes** and part around her.
+- **Rays** — glide gracefully along the seabed/shallows near islands.
+- **Seahorses** — drift among glowing flora in calm shallows (close-detail
+  wonder).
+- **Starfish & small glowing crabs** — on shore rocks and shallows, tiny life
+  for a close gaze.
+- **Tiny shrimp** — faint drifting sparks near the seabed (the plankton's
+  bigger cousins).
+- **Butterflies** — land near flowers and lanterns (also §7).
+- **Fireflies** — blink around rocks/grass and **gather around Mubi when she
+  speaks** (also §7, ties Mubi to the living world).
+- **Small seabirds** — distant Vs and lone gliders across the sky at dawn-tinted
+  beats.
 
-**Interaction:** creatures *notice* the visitor — dolphins veer toward a wake,
-fish part around a touch, a whale may call when looked at. No "catch/tap"
-gimmicks; the reward is witnessing.
+**Behavior rules:** live-in-the-world ambient behavior by default; *occasional*,
+gentle curiosity toward Mubarra (examples above). No catch/tap gimmicks — the
+reward is witnessing. A spatial `EventDirector` stages sightings by emotional
+beat and reacts to the wake-trail RT and to Mubi.
 
-**Audio:** `wildlife` bus — spatialized dolphin clicks, distant whale song
-(a signature emotional sound), soft school shimmer.
+**Tech & shaders (to hit 80/20 realism at 60 FPS):**
+- Low-to-medium-poly `.glb` (Draco/meshopt) with **high-quality materials,
+  lighting, shaders, and animation** doing the heavy lifting — believable
+  *animation* over excessive geometry.
+- **Skeletal animation with blending** for hero motion (dolphin leap, whale
+  sound, turtle paddle, ray undulation); vertex-shader motion for the smallest
+  creatures.
+- **Instancing + LOD + GPU-friendly particles + efficient culling** throughout;
+  fish/shrimp as **GPU boids** (FBO) with a shared flow field; distant whales
+  drop to low-LOD.
+- Bioluminescent rim/accent + optional particle trail as the "20% magical" pass
+  on top of realistic base materials.
 
-**Mobile & reduced-motion:** creature density and school counts scale by tier;
-far whales drop to billboards on `low`; reduced-motion reduces leap frequency
-and speed, keeps motion smooth and calm.
+**Interaction:** creatures notice her — dolphins veer to a wake, fish gather at
+her ripples, fireflies gather when Mubi speaks. Witnessing, not tasks.
 
-**⚖️ Trade-off (important):** *photoreal, fully-rigged marine animals* are
-expensive (model size, skeletal animation, draw calls) and — more importantly —
-photorealism fights the dream-like, bioluminescent art direction. **Recommend
-stylized/impressionistic creatures.** This is a *quality* choice, not a
-simplification: it is more on-brand, more performant, and more emotionally
-coherent than realism. If photoreal is explicitly desired for hero moments
-(e.g. one whale), we can budget a single high-detail hero creature on `high`
-tier — flagged for confirmation (§17).
+**Audio:** `wildlife` bus — spatialized dolphin clicks, distant humpback song (a
+signature emotional sound), soft school shimmer, wingbeats.
+
+**Mobile & reduced-motion:** density/school counts and skeletal LOD scale by
+tier; distant whales → low-LOD on `low`; reduced-motion lowers leap/flight
+frequency and speed while keeping motion smooth and calm.
+
+**⚖️ Trade-off:** full documentary photorealism (dense meshes, per-creature
+high-res skeletal detail) would break the 60 FPS mobile budget and the dreamy
+tone. **Resolved: stylized cinematic realism (80/20)** — believable anatomy &
+motion, magic in the glow, budget spent on animation quality and materials, not
+polygon counts. A single **hero humpback** may carry extra detail on `high`
+tier for its rare awe moment.
 
 ---
 
@@ -302,30 +323,43 @@ tenderness, a rare gentle shimmer-rain for a held breath.
 - **Breeze:** the visible expression of the **wind field** — grass, petals,
   lanterns, and wave direction all move together; gusts pass through as coherent
   waves.
-- **Optional light rain:** a *rare, gentle, opt-in* "phosphorescent drizzle"
-  where each drop lights a tiny bio-ring on the sea (writes to the trail RT).
-  Used only at a specific emotional beat, never as ambient default.
+- **Cinematic light rain (confirmed — an emotional storytelling tool, not a
+  weather mechanic):** most of the journey is clear sky; mist and breeze are
+  common; **rain is rare** and reserved for specific emotional beats. It is
+  **very light, slow-falling, moonlit, barely audible, relaxing, dreamlike** —
+  **no thunder, no lightning, no dark storm clouds, no strong wind, no rough
+  sea.** Each drop that touches the water triggers a **tiny glowing blue
+  bioluminescent ripple** (writes to the trail RT), so the sea *sparkles* and
+  the rain reads as magic, not sadness. **After the rain, clouds slowly part,
+  moonlight returns, and the stars grow brighter than before** — a felt arc of
+  hope and renewed happiness.
+  - **Placed at:** reading a heartfelt love letter · visiting a deeply emotional
+    memory · Mubi's final message · the ending sequence *before* the birthday
+    celebration.
 
 **Tech & shaders:** fog via exponential + a scrolling noise "mist" plane/
 billboards near the camera and islands (cheap, not raymarched); wind field is a
-single global vector + low-freq noise sampled by all systems; rain as GPU points
-with per-drop impact events into the trail RT.
+single global vector + low-freq noise sampled by all systems; rain as an
+optimized GPU-point / screen-space system with per-drop impact events into the
+trail RT; the post-rain "clearing" is a scripted grade + star-brightness ramp.
 
-**Interaction:** breeze responds subtly to the visitor's movement; drizzle turns
-the whole sea into a field of tiny lights that respond to her presence.
+**Interaction:** breeze responds subtly to the visitor's movement; during rain
+the whole sea becomes a field of tiny blue lights that also respond to her
+presence.
 
 **Audio:** wind on the `wind` bus (breeze intensity → filter/volume); rain adds
-a soft patter layer that ducks other layers slightly.
+a *barely audible* soft patter that ducks other layers only slightly, then fades
+into a brighter, warmer swell as the sky clears.
 
-**Mobile & reduced-motion:** mist billboard count scales; rain disabled on
-`low`/`potato`; reduced-motion → static soft fog, no gusts, no rain.
+**Mobile & reduced-motion:** mist billboard count scales; rain uses optimized
+particles/screen-space effects and is tier-gated off on `low`/`potato`;
+reduced-motion → static soft fog, no gusts; rain, if it occurs, is a gentle
+overlay without heavy motion.
 
 **⚖️ Trade-offs:**
-- *Rain on a calm magical sea* risks breaking the peaceful tone **and** costs
-  transparency overdraw. **Recommend keeping it rare, gentle, opt-in, and
-  emotionally placed** (a "phosphorescent drizzle" reframed as beauty, not
-  gloom), tier-gated off on weak devices. This honors the spec's "optional light
-  rain" while protecting the vision and perf.
+- Rain is kept **rare and cinematic** precisely so each appearance is memorable
+  and never breaks the peaceful tone; it is disabled on weak devices to protect
+  perf. (Resolved per direction — rain stays, as an emotional tool.)
 - *True volumetric fog (raymarched)* is expensive. **Recommend layered
   billboard + shader fog** — reads as volumetric in this palette at a fraction
   of the cost.
@@ -463,18 +497,41 @@ self-contained ecosystem reached by gentle sail/glide across the Open Ocean.
 flora, its own audio profile, and shared world layers (ocean/sky/moon) re-tuned
 via `worldProfile`. Only the active island + adjacents stay resident.
 
-**Interaction:** exploration-driven; Mubi offers gentle hints if she lingers
-lost (blueprint hint system).
+**Navigation — seamless hybrid (confirmed): "a dream that gently unfolds."**
+Movement is effortless, peaceful, and emotionally guided; the visitor is never
+lost or forced, and there are **no visible missions, maps, or waypoints.**
+- **Gentle free exploration** within each area + **cinematic transitions**
+  between major locations, with **no loading screens between connected areas**
+  and seamless movement throughout. (Engineering: assets for the next area
+  **stream in during the cinematic transition** that masks the hand-off — see
+  the blueprint scene-system note; the visitor never sees a loader mid-journey.)
+- **Diegetic wayfinding only** (never a UI arrow): a lantern drifting toward a
+  hidden island · dolphins swimming an inviting direction · fireflies gathering
+  at an important spot · **moonlight highlighting a path across the water** ·
+  stars brightening above the next destination · **Mubi floating ahead and
+  glancing back** as if inviting her to follow · a gentle musical change hinting
+  something special is near.
+- **Emotional arc of motion:** beginning slow/mysterious → exploration
+  relaxed/curious → memories intimate/reflective → birthday joyful/energetic →
+  ending peaceful/warm.
 
-**Audio:** each island has a distinct `ambience`/`music` profile with smooth
+**Camera & accessibility:** calm cinematic motion (smooth accel/decel, slow
+panoramic reveals, gentle orbits in emotional scenes, natural focus shifts); the
+camera never fights input (§9). Support touch gestures, **reduced-motion**,
+**adjustable camera sensitivity**, comfortable easing, and an **optional skip
+for long cinematic transitions**.
+
+**Audio:** each area has a distinct `ambience`/`music` profile with smooth
 crossfades on approach/entry (§14).
 
-**⚖️ Trade-off:** a fully open, seamless sail between islands (no loading seams)
-is ideal but demands careful streaming. **Recommend "guided freedom"** — free
-look and free short-range sail within a scene, with graceful, masked
-transitions (fog/glide/audio crossfade) between island scenes rather than one
-giant always-resident world. Preserves immersion within budget. (Navigation
-model is a confirm item — §17.)
+**⚖️ Trade-off (resolved → seamless hybrid):** true seamlessness with no loading
+screens is achieved by **streaming the next area's assets during the cinematic
+transition** (and preloading adjacents), so the swap is masked, not a hard load.
+This is a refinement to the blueprint scene model (§4 note added): scenes still
+mount/unmount one-at-a-time, but transitions are *transition scenes* that render
+during streaming so the visitor perceives one continuous world. Fully
+always-resident open-world streaming remains a possible `high`-tier future
+enhancement.
 
 ---
 
@@ -564,23 +621,24 @@ preserving the emotional vision**. Each is optional and flagged with its cost.
 
 ## 17. 🌐 Global trade-offs & decisions to confirm
 
-Stated plainly so we choose deliberately, per the "explain trade-offs before
-implementing" directive:
+Confirmed decisions (✅) and remaining defaults, stated plainly:
 
+- ✅ **Wildlife style — stylized cinematic realism (80% real / 20% magic)** (§6).
+  Believable anatomy & motion, magic in the glow; budget on animation quality &
+  materials, not polygon counts. A single hero humpback may carry extra detail
+  on `high`.
+- ✅ **Navigation — seamless hybrid** (§13): gentle free exploration within areas
+  + cinematic transitions between them, **no loading screens** (assets stream
+  during the masked transition), diegetic wayfinding only, Mubi leading ahead.
+- ✅ **Light rain — kept as a rare cinematic emotional tool** (§8): light,
+  moonlit, bioluminescent-ripple rain at specific beats; clears to brighter
+  stars; tier-gated off on weak devices.
 - **WebGL vs WebGPU.** Blueprint targets **WebGL/R3F** as baseline (broad,
   reliable Android support in 2026). WebGPU enables compute-based ocean/boids
-  but support is uneven on target devices. **Recommend WebGL-first**, with
-  systems designed so a **WebGPU renderer** can be swapped in behind capability
+  but support is uneven on target devices. **WebGL-first**, with systems
+  designed so a **WebGPU renderer** can be swapped in behind capability
   detection later (R3F supports `WebGPURenderer`). Progressive enhancement, not
   a fork.
-- **Wildlife style.** **Recommend stylized/impressionistic** (§6) over
-  photoreal for coherence + performance; open to one photoreal *hero* creature
-  on `high` if desired. *(Confirm.)*
-- **Navigation model.** **Recommend "guided freedom"** (§13) — free look + short
-  free sail within scenes, masked transitions between islands — over a single
-  seamless always-resident open world. *(Confirm.)*
-- **Light rain.** **Recommend rare, gentle, opt-in "phosphorescent drizzle"**,
-  tier-gated off on weak devices (§8). *(Confirm it stays in.)*
 - **"Millions of stars."** Delivered as **perceptual millions** (parallax +
   density + bloom), not literal million-vertex buffers (§3).
 - **Volumetrics & DoF.** **Approximated** (screen-space god-rays; brief selective

@@ -83,6 +83,10 @@ Two canonical design documents govern all future work:
   it feels*: ocean, sky, moon, lanterns, wildlife, flora, weather, camera
   language, lighting, shaders, interactions, islands, and the per-environment
   soundscape — plus proposed enhancements and their trade-offs.
+- **[`docs/MUBI_AI.md`](docs/MUBI_AI.md)** — *the emotional heart*: Mubi's
+  personality, the Awais↔Mubi↔Mubarra relationship, the gradual reveal,
+  conversation & dialogue architecture, memory, greetings, hints, celebration,
+  emotional-safety & privacy rules, and sample dialogue trees for every stage.
 
 Contributor rules are in [`AGENTS.md`](AGENTS.md).
 

@@ -219,6 +219,14 @@ export interface SceneDefinition {
 - **Transitions** are handled by the animation director (§9): exit timeline of
   the old scene overlaps the enter timeline of the new one (camera + fog +
   audio crossfade), never a hard cut.
+- **Seamless streaming (no loading screens)** — per the World Design navigation
+  decision, the visitor must never see a loader mid-journey. Transitions are
+  **transition scenes**: a cinematic camera move (fog/glide/audio crossfade)
+  renders *while the next area's assets stream in* (adjacents are already
+  warmed). The scene machine still mounts one active scene at a time, but the
+  hand-off is masked by the transition so the world is perceived as continuous.
+  A fully always-resident open world remains a possible `high`-tier future
+  enhancement, not the baseline.
 - **Memory discipline:** on exit, the scene component unmounts and disposes its
   own GPU resources; the `AssetManager` releases assets not referenced by the
   new active scene or its adjacents (§7).

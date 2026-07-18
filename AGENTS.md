@@ -6,8 +6,11 @@
   architecture (*how it's built*).
 - [`docs/WORLD_DESIGN.md`](docs/WORLD_DESIGN.md) — the world design bible
   (*what the world is and how it feels*), including per-system trade-offs.
+- [`docs/MUBI_AI.md`](docs/MUBI_AI.md) — the canonical Mubi AI specification
+  (*the emotional heart*): personality, reveal pacing, dialogue architecture,
+  memory, emotional-safety & privacy rules, and sample dialogue trees.
 
-All implementation must remain consistent with both.
+All implementation must remain consistent with all three.
 
 Key rules (see the blueprint for full detail):
 
